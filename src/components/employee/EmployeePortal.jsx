@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/MockAuthContext'
 
 export default function EmployeePortal() {
-  const { employee } = useAuth()
+  const { employee, mockDB } = useAuth()
   const [team, setTeam] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -14,10 +13,9 @@ export default function EmployeePortal() {
   const fetchTeam = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .order('name', { ascending: true })
+      const { data, error } = await mockDB.employees
+        .select()
+        .order('name')
 
       if (error) throw error
 
