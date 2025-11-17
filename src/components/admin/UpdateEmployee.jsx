@@ -12,6 +12,91 @@ export default function UpdateEmployee({ selected, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [validationErrors, setValidationErrors] = useState({})
+
+  const validateName = (name) => {
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return 'Name is required'
+    }
+    if (trimmedName.length < 2) {
+      return 'Name must be at least 2 characters'
+    }
+    if (trimmedName.length > 50) {
+      return 'Name must not exceed 50 characters'
+    }
+    if (!/^[A-Za-z][A-Za-z\s'-]{1,49}$/.test(trimmedName)) {
+      return 'Name must start with a letter and contain only letters, spaces, hyphens, or apostrophes'
+    }
+    if (/\s{2,}/.test(trimmedName)) {
+      return 'Name cannot contain multiple consecutive spaces'
+    }
+    return null
+  }
+
+  const validatePhone = (phone) => {
+    const trimmedPhone = phone.trim()
+    if (!trimmedPhone) {
+      return null
+    }
+    const digitsOnly = trimmedPhone.replace(/\D/g, '')
+    if (!/^\+?[0-9]{10,15}$/.test(trimmedPhone.replace(/[\s\-\(\)\.]/g, ''))) {
+      if (!trimmedPhone.startsWith('+') && !/^[6-9]\d{9}$/.test(digitsOnly)) {
+        return 'Invalid phone number. Use 10 digits starting with 6-9 or international format with +'
+      }
+    }
+    if (digitsOnly.length < 10) {
+      return 'Phone number must be at least 10 digits'
+    }
+    if (digitsOnly.length > 15) {
+      return 'Phone number must not exceed 15 digits'
+    }
+    if (!/^[\d\s\-\(\)\+\.]+$/.test(trimmedPhone)) {
+      return 'Phone number contains invalid characters'
+    }
+    return null
+  }
+
+  const validateEmail = (email) => {
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      return 'Email is required'
+    }
+    if (trimmedEmail.length < 3 || trimmedEmail.length > 254) {
+      return 'Email must be between 3 and 254 characters'
+    }
+    if (!trimmedEmail.includes('@')) {
+      return 'Email must contain @ symbol'
+    }
+    if (/\s/.test(trimmedEmail)) {
+      return 'Email cannot contain spaces'
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmedEmail)) {
+      return 'Invalid email format. Must be like user@domain.com'
+    }
+    return null
+  }
+
+  const handleNameChange = (e) => {
+    const name = e.target.value
+    setForm({ ...form, name })
+    const error = validateName(name)
+    setValidationErrors({ ...validationErrors, name: error })
+  }
+
+  const handleEmailChange = (e) => {
+    const email = e.target.value
+    setForm({ ...form, email })
+    const error = validateEmail(email)
+    setValidationErrors({ ...validationErrors, email: error })
+  }
+
+  const handlePhoneChange = (e) => {
+    const phone = e.target.value
+    setForm({ ...form, phone })
+    const error = validatePhone(phone)
+    setValidationErrors({ ...validationErrors, phone: error })
+  }
 
   useEffect(() => {
     if (selected) {
@@ -23,6 +108,7 @@ export default function UpdateEmployee({ selected, onSuccess }) {
       })
       setError('')
       setSuccess('')
+      setValidationErrors({})
     }
   }, [selected])
 
@@ -31,8 +117,20 @@ export default function UpdateEmployee({ selected, onSuccess }) {
     setError('')
     setSuccess('')
 
-    if (!form.name || !form.email) {
-      setError('Name and email are required')
+    const nameError = validateName(form.name)
+    const emailError = validateEmail(form.email)
+    const phoneError = validatePhone(form.phone)
+
+    const errors = {
+      name: nameError,
+      email: emailError,
+      phone: phoneError
+    }
+
+    setValidationErrors(errors)
+
+    if (nameError || emailError || phoneError) {
+      setError('Please fix the validation errors before submitting')
       return
     }
 
@@ -101,11 +199,21 @@ export default function UpdateEmployee({ selected, onSuccess }) {
             <input
               type="text"
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={handleNameChange}
               placeholder="Enter full name"
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-colors ${
+                validationErrors.name 
+                  ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' 
+                  : 'border-slate-300 focus:ring-sky-500 focus:border-sky-500'
+              }`}
               required
             />
+            {validationErrors.name && (
+              <p className="mt-2 text-sm text-rose-600 font-semibold flex items-center gap-1">
+                <span>⚠️</span>
+                {validationErrors.name}
+              </p>
+            )}
           </div>
 
           <div>
@@ -115,11 +223,21 @@ export default function UpdateEmployee({ selected, onSuccess }) {
             <input
               type="email"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={handleEmailChange}
               placeholder="email@example.com"
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-colors ${
+                validationErrors.email 
+                  ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' 
+                  : 'border-slate-300 focus:ring-sky-500 focus:border-sky-500'
+              }`}
               required
             />
+            {validationErrors.email && (
+              <p className="mt-2 text-sm text-rose-600 font-semibold flex items-center gap-1">
+                <span>⚠️</span>
+                {validationErrors.email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -127,10 +245,20 @@ export default function UpdateEmployee({ selected, onSuccess }) {
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="+1 (555) 000-0000"
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
+              onChange={handlePhoneChange}
+              placeholder="+1 (555) 000-0000 or 9876543210"
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 transition-colors ${
+                validationErrors.phone 
+                  ? 'border-rose-500 focus:ring-rose-500 focus:border-rose-500' 
+                  : 'border-slate-300 focus:ring-sky-500 focus:border-sky-500'
+              }`}
             />
+            {validationErrors.phone && (
+              <p className="mt-2 text-sm text-rose-600 font-semibold flex items-center gap-1">
+                <span>⚠️</span>
+                {validationErrors.phone}
+              </p>
+            )}
           </div>
 
           <div>
