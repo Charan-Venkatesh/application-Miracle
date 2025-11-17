@@ -1,6 +1,4 @@
 # application-Miracle
-# application-Miracle
-# application-Miracle
 
 Short, clear README with run instructions, sample outputs and placeholders for screenshots.
 
